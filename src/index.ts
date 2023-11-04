@@ -27,7 +27,7 @@ const unpluginFactory = (options: PluginOptions = {}): any => {
         }
       }
 
-      const fileSuffixReg = /.*\.(js|jsx|ts|tsx|vue)$/;
+      const fileSuffixReg = /.*\.(js|cjs|mjs|jsx|ts|tsx|vue|svelte|astro)$/;
 
       if (options.noConsole && fileSuffixReg.test(id)) {
         const codeTransform = transform(code, {
