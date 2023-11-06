@@ -46,6 +46,14 @@ const unpluginFactory = (options: PluginOptions = {}): any => {
         let lineCount = 1;
         let resultCode = '';
 
+        const isConsoleLog = codeList.some(
+          (token) => token.search(consoleReg) >= 0,
+        );
+
+        if (!isConsoleLog) {
+          return { code };
+        }
+
         const originCode = fs.readFileSync(id, 'utf-8');
         const ast = parseSync(originCode, {
           configFile: false,
