@@ -19,7 +19,7 @@
     "@vitejs/plugin-react": "^4.1.0",
     "typescript": "^5.2.2",
     "vite": "^4.5.0",
-    "vite-console-debug": "^1.0.8",
+    "vite-console-debug": "^1.1.0",
     "vite-plugin-react-inspector": "^0.3.3",
     "vite-plugin-resize-image": "^0.0.2"
   }
