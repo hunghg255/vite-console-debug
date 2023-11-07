@@ -1,24 +1,22 @@
-import { createUnplugin } from 'unplugin';
-import { PluginOptions } from './core/types';
-import path from 'path-browserify';
-import { composeConsoleLog } from './core/composeConsoleLog';
 import { transform, parseSync, traverse } from '@babel/core';
-import fs from 'node:fs';
+import path from 'path-browserify';
+import { createUnplugin } from 'unplugin';
+import { composeConsoleLog } from './core/composeConsoleLog';
+import { PluginOptions } from './core/types';
+
+import MagicString from 'magic-string';
 
 const unpluginFactory = (options: PluginOptions = {}): any => {
-  let s;
-
   return {
     name: 'vite-console-debug',
-    configureServer(server) {
-      s = server;
-    },
+    enforce: options.noConsole ? 'post' : 'pre',
     transform(code, id) {
-      const { exclude = ['node_modules'] } = options;
+      const {
+        exclude = ['node_modules'],
+        port = 5173,
+        noConsole = false,
+      } = options;
       const projectDir = path.join(process.cwd());
-      const port = s?.config?.server?.port;
-
-      const pos: any = [];
 
       if (exclude.length) {
         for (let i = 0; i < exclude.length; i += 1) {
@@ -32,7 +30,39 @@ const unpluginFactory = (options: PluginOptions = {}): any => {
 
       const fileSuffixReg = /.*\.(js|cjs|mjs|jsx|ts|tsx)$/;
 
-      if (options.noConsole && fileSuffixReg.test(id)) {
+      if (!fileSuffixReg.test(id)) {
+        return {
+          code,
+        };
+      }
+
+      const codeList = code.split(/\r?\n/);
+      const consoleReg = /console\.log\(/;
+
+      const isConsoleLog = codeList.some(
+        (token) => token.search(consoleReg) >= 0,
+      );
+
+      if (!isConsoleLog) {
+        return { code };
+      }
+
+      const s = new MagicString(code);
+
+      const fileRelativePath = id.replace(projectDir.replace(/\\/g, '/'), '');
+
+      const ast = parseSync(code, {
+        configFile: false,
+        filename: id,
+        ast: true,
+        presets: [
+          '@babel/preset-env',
+          '@babel/preset-react',
+          '@babel/preset-typescript',
+        ],
+      });
+
+      if (noConsole) {
         const codeTransform = transform(code, {
           plugins: [['transform-remove-console', { exclude: ['error'] }]],
         });
@@ -40,81 +70,29 @@ const unpluginFactory = (options: PluginOptions = {}): any => {
         return { code: codeTransform?.code ?? code };
       }
 
-      if (fileSuffixReg.test(id)) {
-        const codeList = code.split(/\r?\n/);
-        const consoleReg = /console\.log\(/;
-        let lineCount = 1;
-        let resultCode = '';
-
-        const isConsoleLog = codeList.some(
-          (token) => token.search(consoleReg) >= 0,
-        );
-
-        if (!isConsoleLog) {
-          return { code };
-        }
-
-        const originCode = fs.readFileSync(id, 'utf-8');
-        const ast = parseSync(originCode, {
-          configFile: false,
-          filename: id,
-          ast: true,
-          presets: [
-            '@babel/preset-env',
-            '@babel/preset-react',
-            '@babel/preset-typescript',
-          ],
-        });
-
-        traverse(ast, {
-          enter({ node }) {
-            if (
-              node.type === 'MemberExpression' &&
-              node.object.name === 'console' &&
-              node.property.name === 'log'
-            ) {
-              pos.push(node.property.loc.start.line);
-            }
-          },
-        });
-
-        codeList.forEach((token) => {
-          if (token.search(consoleReg) >= 0) {
-            const fileRelativePath = id.replace(
-              projectDir.replace(/\\/g, '/'),
-              '',
-            );
-
-            const prefix = token.slice(
-              token.search(consoleReg),
-              12 + token.search(consoleReg),
-            );
-
-            const suffix = token.slice(12 + token.search(consoleReg));
-
+      traverse(ast, {
+        enter({ node }) {
+          if (
+            node.type === 'CallExpression' &&
+            node.callee &&
+            node.callee.property &&
+            node.callee.object &&
+            node.callee.object.name === 'console' &&
+            node.callee.property.name === 'log'
+          ) {
             const ret = composeConsoleLog({
-              prefix,
-              suffix,
               fileRelativePath,
               fileAbsolutePath: id,
-              lineCount: pos[0] ?? lineCount,
-              endCloumn: token.length + 1,
-              port: port,
-              jump: !!port,
+              lineCount: node.loc.start.line,
+              endCloumn: node.loc.start.column + 1,
+              port,
             });
-
-            pos.shift();
-
-            resultCode += `${ret}\n`;
-          } else {
-            resultCode += `${token}\n`;
+            s.appendLeft(node.callee.start + 12, ret);
           }
-          lineCount += 1;
-        });
-        return { code: resultCode };
-      }
+        },
+      });
 
-      return { code };
+      return { code: s.toString() };
     },
   };
 };

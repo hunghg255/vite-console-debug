@@ -1,6 +1,6 @@
 {
   "name": "vite-console-debug",
-  "version": "1.0.11",
+  "version": "1.0.12",
   "description": "📦 📦 unplugin console debug",
   "scripts": {
     "build": "tsup && npm run build:fix",
@@ -101,6 +101,7 @@
     "@nuxt/schema": "^3.8.0",
     "@rollup/pluginutils": "^5.0.5",
     "babel-plugin-transform-remove-console": "^6.9.4",
+    "magic-string": "^0.30.5",
     "path-browserify": "^1.0.1",
     "unplugin": "^1.5.0"
   },

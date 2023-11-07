@@ -97,44 +97,29 @@ export function generateNewLineStyle() {
 
 /**
  * @param {Object} components
- * @param {string} components.prefix
- * @param {string} components.suffix
  * @param {string} components.fileRelativePath
  * @param {string} components.fileAbsolutePath
  * @param {number} components.lineCount
  * @param {number} components.endCloumn
  * @param {number|string} components.port
- * @param {boolean} components.jump
  * @returns {string}
  */
 export function composeConsoleLog(components) {
-  const {
-    prefix,
-    suffix,
-    fileRelativePath,
-    fileAbsolutePath,
-    lineCount,
-    endCloumn,
-    port,
-    jump,
-  } = components;
+  const { fileRelativePath, fileAbsolutePath, lineCount, endCloumn, port } =
+    components;
   return `${
-    prefix +
     generateLogTitle() +
     generateFileLocation(fileRelativePath) +
     generateLine(lineCount) +
-    (jump
-      ? generateAddress(
-          port,
-          encodeURIComponent(`${fileAbsolutePath}:${lineCount}:${endCloumn}`),
-        )
-      : '') +
+    generateAddress(
+      port,
+      encodeURIComponent(`${fileAbsolutePath}:${lineCount}:${endCloumn}`),
+    ) +
     `${generateNewLine()},` +
     `${generateLogTitleStyle()},` +
     `${generateFileLocationStyle()},` +
     `${generateLineStyle()},` +
-    (jump ? `${generateAddressStyle()},` : '') +
-    `${generateNewLineStyle()},` +
-    suffix
+    `${generateAddressStyle()},` +
+    `${generateNewLineStyle()},`
   }`;
 }
