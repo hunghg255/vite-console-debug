@@ -1,5 +1,7 @@
+import { Buffer } from 'node:buffer';
+
 const BaseURL = 'http://localhost:';
-const middlewareName = '__open-in-editor';
+const middlewareName = 'client';
 
 /**
  *
@@ -68,7 +70,10 @@ export function generateLineStyle() {
  * @returns {string}
  */
 export function generateAddress(port, filePath) {
-  return `%cJump to: ${BaseURL + port}/${middlewareName}?file=${filePath}\\n`;
+  return `%cJump to: ${BaseURL + port}/${middlewareName}#${Buffer.from(
+    filePath,
+    'utf-8',
+  ).toString('base64')}\\n`;
 }
 
 /**

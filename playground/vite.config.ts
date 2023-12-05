@@ -8,6 +8,7 @@ export default defineConfig(({ mode }) => {
     plugins: [
       ViteConsoleDebug({
         noConsole: mode === 'production',
+        disableLaunchEditor: mode === 'production',
       }),
       react(),
     ],

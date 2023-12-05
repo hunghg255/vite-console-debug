@@ -1,6 +1,8 @@
-import { basename, resolve } from 'path';
 import { promises as fs } from 'fs';
 import fg from 'fast-glob';
+import { fileURLToPath } from 'node:url';
+import { basename, dirname, join, resolve } from 'pathe';
+import { copy } from 'fs-extra';
 
 async function run() {
   // fix cjs exports
@@ -18,6 +20,14 @@ async function run() {
     // eslint-disable-next-line no-await-in-loop
     await fs.writeFile(file, code);
   }
+
+  const source = join(dirname(fileURLToPath(import.meta.url)), '../src/client');
+  const target = join(
+    dirname(fileURLToPath(import.meta.url)),
+    '../dist/client',
+  );
+
+  copy(source, target);
 }
 
 run();

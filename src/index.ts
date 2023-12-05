@@ -4,19 +4,22 @@ import path from 'path-browserify';
 import { composeConsoleLog } from './core/composeConsoleLog';
 import { transform, parseSync, traverse } from '@babel/core';
 import fs from 'node:fs';
+import { startServer } from './server/server';
+
+const PORT = 3070;
 
 const unpluginFactory = (options: PluginOptions = {}): any => {
-  let s;
-
   return {
     name: 'vite-console-debug',
-    configureServer(server) {
-      s = server;
+    configureServer() {
+      if (options.disableLaunchEditor) return;
+
+      startServer(PORT);
     },
     transform(code, id) {
       const { exclude = ['node_modules'], noConsole = false } = options;
       const projectDir = path.join(process.cwd());
-      const port = s?.config?.server?.port;
+      const port = PORT;
 
       const pos: any = [];
 
