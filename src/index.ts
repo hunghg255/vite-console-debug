@@ -105,7 +105,6 @@ const unpluginFactory = (options: PluginOptions = {}): any => {
             lineCount: pos[0] ?? lineCount,
             endCloumn: token.length + 1,
             port: port,
-            jump: !!port,
           });
 
           pos.shift();
